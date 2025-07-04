@@ -8,10 +8,10 @@
 import SwiftUI
 
 @main
-struct TmdbAppApp: App {
+struct TmdbApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MovieGalleryView()
         }
     }
 }
