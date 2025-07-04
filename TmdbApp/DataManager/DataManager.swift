@@ -10,6 +10,12 @@ import Foundation
 class DataManager {
     static let shared = DataManager()
     
+    let digitalType = 4 // Digital only releases like Amazon Prime / Netflix
+    
+    let theaterType = 3 // Theatrical releases
+    
+    let usCode = "US"
+    
     var popularMovies = [MovieData]()
     
     var genreMap = [Int: String]()
@@ -19,7 +25,7 @@ class DataManager {
             print("Could not match id with key")
             return
         }
-        popularMovies[index].key = key
+        popularMovies[index].youtubeId = key
     }
     
     func addMovieDetailsData(for id: Int, details: MovieDetails) {
@@ -31,6 +37,16 @@ class DataManager {
         popularMovies[index].revenue = details.revenue
         popularMovies[index].runtime = details.runtime
         popularMovies[index].productionCompanies = details.productionCompanies
+    }
+    
+    func addCertDetails(for id: Int, details: [ReleaseResults]?, dataState: DataState) {
+        guard let details, let movieIndex = popularMovies.firstIndex(where: { $0.id == id}) else { return }
+        if let index = details.firstIndex(where: { $0.country == usCode }),
+           let releaseResults = details[index].releaseDates,
+           let mainReleaseIndex = releaseResults.firstIndex(where: { ($0.type == theaterType) || ($0.type == digitalType)})
+        {
+            dataState == .popular ? (popularMovies[movieIndex].certification = releaseResults[mainReleaseIndex].certification) : ()
+        }
     }
     
     func addGenreDetails() {
@@ -61,7 +77,7 @@ class DataManager {
             for member in crew {
                 if member.job?.lowercased() == "director" {
                     director = member.name?.lowercased()
-                    popularMovies[index].director = .init(name: director ?? "Unknown", jobs: []) // We should never hit unknown cause we verify it exists
+                    popularMovies[index].director = .init(id: member.id ?? -1, name: director ?? "Unknown", jobs: []) // We should never hit unknown cause we verify it exists
                 }
             }
             // Second find all the roles the director was apart of
@@ -77,4 +93,8 @@ class DataManager {
         }
     }
     
+    enum DataState {
+        case popular
+        case trending
+    }
 }

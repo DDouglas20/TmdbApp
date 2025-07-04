@@ -16,11 +16,13 @@ struct CrewModel: Codable {
 }
 
 struct Crew: Codable {
+    var id: Int? // The person's id
     var name: String?
     var department: String?
     var job: String?
     
     private enum CodingKeys: String, CodingKey {
+        case id
         case name
         case department
         case job

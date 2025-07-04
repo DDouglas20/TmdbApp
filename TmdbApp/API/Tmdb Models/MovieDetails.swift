@@ -21,7 +21,7 @@ struct MovieDetails: Codable {
     }
 }
 
-struct ProductionCompanies: Codable {
+struct ProductionCompanies: Codable, Hashable {
     var logoPath: String?
     var name: String?
     

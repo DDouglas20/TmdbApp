@@ -32,9 +32,9 @@ class MovieGalleryViewModel: ObservableObject {
     
     
     // MARK: Functions
-    func loadMovies() async {
+    func loadMovies(dataState: DataManager.DataState = .popular) async {
         Task {
-            await ApiClient.shared.loadPopularMovies()
+            await ApiClient.shared.loadPopularMovies(state: dataState)
             DispatchQueue.main.async {
                 self.isLoading = false
             }

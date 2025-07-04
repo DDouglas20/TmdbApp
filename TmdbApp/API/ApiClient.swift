@@ -28,11 +28,8 @@ class ApiClient {
     
     // TODO: Image call, Logo call (do it in one) - SCRAPPED KingFisher
     
-    func loadPopularMovies() async {
+    func loadPopularMovies(state: DataManager.DataState) async {
         do {
-            // Fetch popular movies
-            try await fetchGenres()
-
             let popular = try await withCheckedThrowingContinuation { continuation in
                 getPopularMovies { success in
                     if success {
@@ -51,15 +48,9 @@ class ApiClient {
                             try await self.getVideoData(movieId: movie.id ?? 0)
                             try await self.getMovieDetails(movieId: movie.id ?? 0)
                             try await self.getCredits(movieId: movie.id ?? 0)
-
+                            try await self.fetchGenres()
+                            try await self.getMovieCertification(movieId: movie.id ?? 0)
                             
-
-//                            DataManager.shared.popularMovies[index].key = videoResult.first(where: { $0.site == "YouTube" })?.key
-//                            DataManager.shared.popularMovies[index].budget = detailsResult.budget
-//                            DataManager.shared.popularMovies[index].revenue = detailsResult.revenue
-//                            DataManager.shared.popularMovies[index].runtime = detailsResult.runtime
-//                            DataManager.shared.popularMovies[index].director = creditsResult.crew.first(where: { $0.job == "Director" })
-//                            DataManager.shared.popularMovies[index].categories = movie.genreIds?.compactMap { genreMap[$0] } ?? []
                         } catch {
                             print("Failed to get movie \(movie.id ?? -1): \(error)")
                         }
@@ -75,7 +66,8 @@ class ApiClient {
     }
 
     
-    // TODO: Details call
+    /// Gets the details for an individual movie
+    /// - Parameter movieId: The movie's id
     private func getMovieDetails(movieId: Int) async throws {
         guard let url = formURL(baseUrl: Constants.baseURL + "movie/\(movieId)", endpoint: nil) else {
             throw APIError.invalidURL
@@ -93,9 +85,28 @@ class ApiClient {
             }
         }
     }
+    
+    private func getMovieCertification(movieId: Int) async throws {
+        guard let url = formURL(baseUrl: Constants.baseURL + "movie/\(movieId)/", endpoint: .cert) else {
+            throw APIError.invalidURL
+        }
+
+        return try await withCheckedThrowingContinuation { continuation in
+            request(url: url, expecting: ReleaseDatesModel.self) { result in
+                switch result {
+                case .success(let details):
+                    DataManager.shared.addCertDetails(for: movieId, details: details.results, dataState: .popular)
+                    continuation.resume()
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
 
     
-    // TODO: Video call
+    /// Gets the youtubeId for watching the trailer
+    /// - Parameter movieId: The movie's id
     private func getVideoData(movieId: Int) async throws {
         guard let url = formURL(baseUrl: Constants.baseURL + "movie/\(movieId)/", endpoint: .videos) else {
             throw APIError.invalidURL
@@ -118,7 +129,7 @@ class ApiClient {
     
     // TODO: Genre call
     func fetchGenres() async throws {
-        guard let url = formURL(baseUrl: Constants.baseURL + "genre/", endpoint: .list) else {
+        guard let url = formURL(baseUrl: Constants.baseURL + "genre/movie/", endpoint: .list) else {
             throw APIError.invalidURL
         }
 
@@ -169,7 +180,6 @@ class ApiClient {
         request(url: url, expecting: PopularModel.self) { result in
             switch result {
             case .success(let model):
-                print("Model Received: \(model)")
                 completion(true)
             case .failure(let error):
                 print(error)
@@ -178,24 +188,6 @@ class ApiClient {
             }
         }
     }
-    
-//    private func getBaseImageURL(completion: @escaping (String?) -> Void) {
-//        guard let url = formURL(baseUrl: Constants.baseURL, endpoint: Endpoint.configuration) else {
-//            // Could not retrieve the url
-//            return
-//        }
-//        
-//        // Get the first 2 pieces of the url
-//        request(url: url, expecting: String.self) { result in
-//            switch result {
-//            case .success(let string):
-//                completion(string) // This is the url we need for images, we need to append the poster_path to it as a query param
-//            case .failure(let error):
-//                completion(nil)
-//            }
-//        }
-//        
-//    }
     
     // MARK: Boiler Plate Functions & Enums
     private func formURL(baseUrl: String, endpoint: Endpoint?, queryParams: [String: String] = [:]) -> URL? {
@@ -213,8 +205,6 @@ class ApiClient {
         queryItems.append(.init(name: "api_key", value: Constants.apiKey)) // TODO: Double check this is the param for token
         
         urlString += "?" + queryItems.map { "\($0.name)=\($0.value ?? "")"}.joined(separator: "&")
-        
-        print(urlString)
         
         return URL(string: urlString)
     }
@@ -240,7 +230,6 @@ class ApiClient {
             }
             
             do {
-                //print(String(data: data, encoding: .utf8))
                 let result = try JSONDecoder().decode(expecting, from: data)
                 completion(.success(result))
             } catch {
@@ -257,6 +246,7 @@ class ApiClient {
         case videos = "videos"
         case list = "list"
         case credits = "credits"
+        case cert = "release_dates"
     }
     
     private enum APIError: Error {

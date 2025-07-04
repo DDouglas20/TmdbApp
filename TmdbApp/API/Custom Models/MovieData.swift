@@ -9,29 +9,32 @@ import Foundation
 import UIKit
 
 /// The model we will use to normalize all of the Popular json data
-struct MovieData {
-    let id: Int? // Movie id
-    let isAdult: Bool? // If the movie is for adults only
-    let movieName: String?
-    let movieRating: Double?
-    let reviewCount: Int?
-    let releaseDate: String?
-    let overview: String?
-    let genreIds: [Int]?
-    let portaitPath: String? // Use KF for all images
-    let landscapePath: String?
+struct MovieData: Hashable {
+    var id: Int? // Movie id
+    var isAdult: Bool? // If the movie is for adults only
+    var movieName: String?
+    var movieRating: Double?
+    var reviewCount: Int?
+    var releaseDate: String?
+    var overview: String?
+    var genreIds: [Int]?
+    var portaitPath: String? // Use KF for all images
+    var landscapePath: String?
     
-    // Details we will need a second api call for
+    // Details we will need another api call for
     var budget: Int?
     var revenue: Int?
     var runtime: Int?
     var productionCompanies: [ProductionCompanies]?
-    var key: String? // The video key used in the youtube url
+    var youtubeId: String? // The video key used in the youtube url
     var director: Director?
     var categories: [String]? = []
+    var certification: String?
+    
 }
 
-struct Director {
+struct Director: Hashable {
+    var id: Int
     var name: String
     var jobs: [String]
 }
