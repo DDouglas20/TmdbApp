@@ -14,8 +14,7 @@ class ApiClient {
     
     private struct Constants {
         static let baseURL = "https://api.themoviedb.org/3/"
-        static let baseImageURL = "https://image.tmdb.org/t/p/original"
-        static let apiKey = "ffc59b7cf2895c4d60f4d00a7d1bbd53" // TODO: Remove api key before commit
+        static let apiKey = "ffc59b7cf2895c4d60f4d00a7d1bbd53" // TODO: Remove api key before push
     }
     
     // TODO: Func retrieve image
@@ -29,7 +28,7 @@ class ApiClient {
     
     // TODO: Image call, Logo call (do it in one) - SCRAPPED KingFisher
     
-    func loadEnrichedPopularMovies() async {
+    func loadPopularMovies() async {
         do {
             // Fetch popular movies
             try await fetchGenres()
@@ -44,7 +43,6 @@ class ApiClient {
                 }
             }
 
-            // Now enrich each movie with videos, details, credits
             await withTaskGroup(of: Void.self) { group in
                 for index in popular.indices {
                     group.addTask {
@@ -56,7 +54,6 @@ class ApiClient {
 
                             
 
-                            // Update the model however you need
 //                            DataManager.shared.popularMovies[index].key = videoResult.first(where: { $0.site == "YouTube" })?.key
 //                            DataManager.shared.popularMovies[index].budget = detailsResult.budget
 //                            DataManager.shared.popularMovies[index].revenue = detailsResult.revenue
@@ -64,13 +61,13 @@ class ApiClient {
 //                            DataManager.shared.popularMovies[index].director = creditsResult.crew.first(where: { $0.job == "Director" })
 //                            DataManager.shared.popularMovies[index].categories = movie.genreIds?.compactMap { genreMap[$0] } ?? []
                         } catch {
-                            print("Failed to enrich movie \(movie.id ?? -1): \(error)")
+                            print("Failed to get movie \(movie.id ?? -1): \(error)")
                         }
                     }
                 }
             }
 
-            print("Finished enriching all movies")
+            print("Finished getting all movies")
 
         } catch {
             print("Error during initial movie load: \(error)")
@@ -125,10 +122,10 @@ class ApiClient {
             throw APIError.invalidURL
         }
 
-        let response = try await withCheckedThrowingContinuation { continuation in
+        _ = try await withCheckedThrowingContinuation { continuation in
             request(url: url, expecting: ListModel.self) { result in
                 switch result {
-                case .success(let genreResponse):
+                case .success(_):
                     continuation.resume()
                     DataManager.shared.addGenreDetails()
                 case .failure(let error):
@@ -149,7 +146,7 @@ class ApiClient {
                 switch result {
                 case .success(let response):
                     // Example: find the director from crew
-                    if let director = response.crew?.first(where: { $0.job == "Director" }) {
+                    if (response.crew?.first(where: { $0.job == "Director" })) != nil {
                         DataManager.shared.addDirectorData(for: movieId, data: response)
                     }
                     continuation.resume() // success
@@ -182,23 +179,23 @@ class ApiClient {
         }
     }
     
-    private func getBaseImageURL(completion: @escaping (String?) -> Void) {
-        guard let url = formURL(baseUrl: Constants.baseURL, endpoint: Endpoint.configuration) else {
-            // Could not retrieve the url
-            return
-        }
-        
-        // Get the first 2 pieces of the url
-        request(url: url, expecting: String.self) { result in
-            switch result {
-            case .success(let string):
-                completion(string) // This is the url we need for images, we need to append the poster_path to it as a query param
-            case .failure(let error):
-                completion(nil)
-            }
-        }
-        
-    }
+//    private func getBaseImageURL(completion: @escaping (String?) -> Void) {
+//        guard let url = formURL(baseUrl: Constants.baseURL, endpoint: Endpoint.configuration) else {
+//            // Could not retrieve the url
+//            return
+//        }
+//        
+//        // Get the first 2 pieces of the url
+//        request(url: url, expecting: String.self) { result in
+//            switch result {
+//            case .success(let string):
+//                completion(string) // This is the url we need for images, we need to append the poster_path to it as a query param
+//            case .failure(let error):
+//                completion(nil)
+//            }
+//        }
+//        
+//    }
     
     // MARK: Boiler Plate Functions & Enums
     private func formURL(baseUrl: String, endpoint: Endpoint?, queryParams: [String: String] = [:]) -> URL? {

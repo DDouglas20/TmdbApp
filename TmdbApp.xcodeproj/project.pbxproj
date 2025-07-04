@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B7656F792E1816A700D93242 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = B7656F782E1816A700D93242 /* Kingfisher */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		B7656F332E174F7B00D93242 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B7656F792E1816A700D93242 /* Kingfisher in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +83,7 @@
 				B7656F242E174F7A00D93242 /* TmdbApp */,
 				B7656F352E174F7B00D93242 /* TmdbAppTests */,
 				B7656F3F2E174F7B00D93242 /* TmdbAppUITests */,
+				B7656F772E1816A700D93242 /* Frameworks */,
 				B7656F232E174F7A00D93242 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -90,6 +96,13 @@
 				B7656F3C2E174F7B00D93242 /* TmdbAppUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		B7656F772E1816A700D93242 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -112,6 +125,7 @@
 			);
 			name = TmdbApp;
 			packageProductDependencies = (
+				B7656F782E1816A700D93242 /* Kingfisher */,
 			);
 			productName = TmdbApp;
 			productReference = B7656F222E174F7A00D93242 /* TmdbApp.app */;
@@ -568,6 +582,14 @@
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B7656F782E1816A700D93242 /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B7656F4F2E17514200D93242 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B7656F1A2E174F7A00D93242 /* Project object */;
 }
