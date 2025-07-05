@@ -23,12 +23,47 @@ class ApiClient {
     
     // MARK: Functions
     
-    func loadPopularMovies(state: DataManager.DataState) async {
+    func loadPopularMovies() async {
         do {
             let popular = try await withCheckedThrowingContinuation { continuation in
                 getPopularMovies { success in
                     if success {
                         continuation.resume(returning: DataManager.shared.popularMovies)
+                        for movie in DataManager.shared.popularMovies {
+                            if let id = movie.id {
+                                DataManager.shared.popDict[id] = true
+                            }
+                        }
+                    } else {
+                        continuation.resume(throwing: APIError.unknown)
+                    }
+                }
+            }
+            
+            let trendingWeek = try await withCheckedThrowingContinuation { continuation in
+                getTrendingMoviesWeek { success in
+                    if success {
+                        continuation.resume(returning: DataManager.shared.trendingMoviesWeek)
+                        for movie in DataManager.shared.trendingMoviesWeek {
+                            if let id = movie.id {
+                                DataManager.shared.trendWeekDict[id] = true
+                            }
+                        }
+                    } else {
+                        continuation.resume(throwing: APIError.unknown)
+                    }
+                }
+            }
+            
+            let trendingDay = try await withCheckedThrowingContinuation { continuation in
+                getTrendingMoviesDay { success in
+                    if success {
+                        continuation.resume(returning: DataManager.shared.trendingMoviesDay)
+                        for movie in DataManager.shared.trendingMoviesDay {
+                            if let id = movie.id {
+                                DataManager.shared.trendDayDict[id] = true
+                            }
+                        }
                     } else {
                         continuation.resume(throwing: APIError.unknown)
                     }
@@ -40,11 +75,41 @@ class ApiClient {
                     group.addTask {
                         let movie = popular[index]
                         do {
-                            try await self.getVideoData(movieId: movie.id ?? 0)
-                            try await self.getMovieDetails(movieId: movie.id ?? 0)
-                            try await self.getCredits(movieId: movie.id ?? 0)
-                            try await self.fetchGenres()
-                            try await self.getMovieCertification(movieId: movie.id ?? 0)
+                            try await self.getVideoData(movieId: movie.id ?? 0, dataState: .popular)
+                            try await self.getMovieDetails(movieId: movie.id ?? 0, dataState: .popular)
+                            try await self.getCredits(movieId: movie.id ?? 0, dataState: .popular)
+                            try await self.fetchGenres(dataState: .popular)
+                            try await self.getMovieCertification(movieId: movie.id ?? 0, dataState: .popular)
+                            
+                        } catch {
+                            print("Failed to get movie \(movie.id ?? -1): \(error)")
+                        }
+                    }
+                }
+                for index in trendingWeek.indices {
+                    group.addTask {
+                        let movie = trendingWeek[index]
+                        do {
+                            try await self.getVideoData(movieId: movie.id ?? 0, dataState: .trendWeek)
+                            try await self.getMovieDetails(movieId: movie.id ?? 0, dataState: .trendWeek)
+                            try await self.getCredits(movieId: movie.id ?? 0, dataState: .trendWeek)
+                            try await self.fetchGenres(dataState: .trendWeek)
+                            try await self.getMovieCertification(movieId: movie.id ?? 0, dataState: .trendWeek)
+                            
+                        } catch {
+                            print("Failed to get movie \(movie.id ?? -1): \(error)")
+                        }
+                    }
+                }
+                for index in trendingDay.indices {
+                    group.addTask {
+                        let movie = trendingDay[index]
+                        do {
+                            try await self.getVideoData(movieId: movie.id ?? 0, dataState: .trendDay)
+                            try await self.getMovieDetails(movieId: movie.id ?? 0, dataState: .trendDay)
+                            try await self.getCredits(movieId: movie.id ?? 0, dataState: .trendDay)
+                            try await self.fetchGenres(dataState: .trendDay)
+                            try await self.getMovieCertification(movieId: movie.id ?? 0, dataState: .trendDay)
                             
                         } catch {
                             print("Failed to get movie \(movie.id ?? -1): \(error)")
@@ -54,6 +119,7 @@ class ApiClient {
             }
 
             print("Finished getting all movies")
+            print("Week count: \(DataManager.shared.trendingMoviesWeek.count)\nDay count: \(DataManager.shared.trendingMoviesDay.count)")
 
         } catch {
             print("Error during initial movie load: \(error)")
@@ -63,7 +129,10 @@ class ApiClient {
     
     /// Gets the details for an individual movie
     /// - Parameter movieId: The movie's id
-    private func getMovieDetails(movieId: Int) async throws {
+    private func getMovieDetails(movieId: Int, dataState: DataManager.DataState) async throws {
+        if dataInCache(movieId: movieId, dataState: dataState) {
+            return
+        }
         guard let url = formURL(baseUrl: Constants.baseURL + "movie/\(movieId)", endpoint: nil) else {
             throw APIError.invalidURL
         }
@@ -72,7 +141,9 @@ class ApiClient {
             request(url: url, expecting: MovieDetails.self) { result in
                 switch result {
                 case .success(let details):
-                    DataManager.shared.addMovieDetailsData(for: movieId, details: details)
+                    DataManager.shared.modifyMovieArray(dataState: dataState, operation: { arr in
+                        DataManager.shared.addMovieDetailsData(for: movieId, details: details, arr: &arr)
+                    })
                     continuation.resume()
                 case .failure(let error):
                     continuation.resume(throwing: error)
@@ -81,7 +152,10 @@ class ApiClient {
         }
     }
     
-    private func getMovieCertification(movieId: Int) async throws {
+    private func getMovieCertification(movieId: Int, dataState: DataManager.DataState) async throws {
+        if dataInCache(movieId: movieId, dataState: dataState) {
+            return
+        }
         guard let url = formURL(baseUrl: Constants.baseURL + "movie/\(movieId)/", endpoint: .cert) else {
             throw APIError.invalidURL
         }
@@ -90,7 +164,9 @@ class ApiClient {
             request(url: url, expecting: ReleaseDatesModel.self) { result in
                 switch result {
                 case .success(let details):
-                    DataManager.shared.addCertDetails(for: movieId, details: details.results, dataState: .popular)
+                    DataManager.shared.modifyMovieArray(dataState: dataState, operation: { arr in
+                        DataManager.shared.addCertDetails(for: movieId, details: details.results, arr: &arr)
+                    })
                     continuation.resume()
                 case .failure(let error):
                     continuation.resume(throwing: error)
@@ -102,7 +178,10 @@ class ApiClient {
     
     /// Gets the youtubeId for watching the trailer
     /// - Parameter movieId: The movie's id
-    private func getVideoData(movieId: Int) async throws {
+    private func getVideoData(movieId: Int, dataState: DataManager.DataState) async throws {
+        if dataInCache(movieId: movieId, dataState: dataState) {
+            return
+        }
         guard let url = formURL(baseUrl: Constants.baseURL + "movie/\(movieId)/", endpoint: .videos) else {
             throw APIError.invalidURL
         }
@@ -113,7 +192,9 @@ class ApiClient {
                     continuation.resume()
                     if let filteredArray = response.results?.filter({ $0.site?.lowercased() == "youtube" && $0.type?.lowercased() == "trailer"}),
                        let trailer = filteredArray.first {
-                        DataManager.shared.addVideoData(for: movieId, key: trailer.key)
+                        DataManager.shared.modifyMovieArray(dataState: dataState, operation: { arr in
+                            DataManager.shared.addVideoData(for: movieId, key: trailer.key, arr: &arr)
+                        })
                     }
                 case .failure(let error):
                     continuation.resume(throwing: error)
@@ -123,7 +204,7 @@ class ApiClient {
     }
     
     // TODO: Genre call
-    func fetchGenres() async throws {
+    func fetchGenres(dataState: DataManager.DataState) async throws {
         guard let url = formURL(baseUrl: Constants.baseURL + "genre/movie/", endpoint: .list) else {
             throw APIError.invalidURL
         }
@@ -133,7 +214,9 @@ class ApiClient {
                 switch result {
                 case .success(_):
                     continuation.resume()
-                    DataManager.shared.addGenreDetails()
+                    DataManager.shared.modifyMovieArray(dataState: dataState, operation: {arr in
+                        DataManager.shared.addGenreDetails(arr: &arr)
+                    })
                 case .failure(let error):
                     continuation.resume(throwing: error)
                 }
@@ -144,7 +227,10 @@ class ApiClient {
     
     /// Get movie credits so we can find the director
     /// - Parameter movieId: The movie's id
-    private func getCredits(movieId: Int) async throws {
+    private func getCredits(movieId: Int, dataState: DataManager.DataState) async throws {
+        if dataInCache(movieId: movieId, dataState: dataState) {
+            return
+        }
         guard let url = formURL(baseUrl: Constants.baseURL + "movie/\(movieId)/", endpoint: .credits) else {
             throw APIError.invalidURL
         }
@@ -155,7 +241,9 @@ class ApiClient {
                 case .success(let response):
                     // Example: find the director from crew
                     if (response.crew?.first(where: { $0.job == "Director" })) != nil {
-                        DataManager.shared.addDirectorData(for: movieId, data: response)
+                        DataManager.shared.modifyMovieArray(dataState: dataState, operation: { arr in
+                            DataManager.shared.addDirectorData(for: movieId, data: response, arr: &arr)
+                        })
                     }
                     continuation.resume() // success
                 case .failure(let error):
@@ -171,12 +259,14 @@ class ApiClient {
         guard let url = formURL(baseUrl: Constants.baseURL, endpoint: Endpoint.popular) else {
             // Invalid url
             print(APIError.invalidURL)
+            completion(false)
             return
         }
         
-        request(url: url, expecting: PopularModel.self) { result in
+        request(url: url, expecting: MovieModel.self) { result in
             switch result {
-            case .success(_):
+            case .success(let response):
+                DataManager.shared.initMoviesArr(model: response, dataState: .popular)
                 completion(true)
             case .failure(let error):
                 print(error)
@@ -184,6 +274,75 @@ class ApiClient {
                 return
             }
         }
+    }
+    
+    
+    /// Gets the trending movies for the week
+    /// - Parameter completion: Completion on whether or not the api call succeeded
+    func getTrendingMoviesWeek(completion: @escaping (Bool) -> Void) {
+        guard let url = formURL(baseUrl: Constants.baseURL, endpoint: Endpoint.trendWeek) else {
+            // Invalid url
+            print(APIError.invalidURL)
+            completion(false)
+            return
+        }
+        request(url: url, expecting: MovieModel.self) { result in
+            switch result {
+            case .success(let response):
+                DataManager.shared.initMoviesArr(model: response, dataState: .trendWeek)
+                completion(true)
+            case .failure(let error):
+                print(error)
+                completion(false)
+                return
+            }
+        }
+    }
+    
+    /// Gets the trending movies for the day
+    /// - Parameter completion: Completion on whether or not the api call succeeded
+    func getTrendingMoviesDay(completion: @escaping (Bool) -> Void) {
+        guard let url = formURL(baseUrl: Constants.baseURL, endpoint: Endpoint.trendDay) else {
+            // Invalid url
+            print(APIError.invalidURL)
+            completion(false)
+            return
+        }
+        request(url: url, expecting: MovieModel.self) { result in
+            switch result {
+            case .success(let response):
+                DataManager.shared.initMoviesArr(model: response, dataState: .trendDay)
+                completion(true)
+            case .failure(let error):
+                print(error)
+                completion(false)
+                return
+            }
+        }
+    }
+    
+    private func dataInCache(movieId: Int, dataState: DataManager.DataState) -> Bool {
+//        if let movieData = DataManager.shared.checkDictForValue(for: movieId) {
+//            switch dataState {
+//            case .popular:
+//                // Popular case we dont need to do anything
+//                return false
+//            case .trendWeek:
+//                // Popular might have trending week movies
+//                if let index = DataManager.shared.trendingMoviesWeek.firstIndex(where: { $0.id == movieData.id }) {
+//                    DataManager.shared.trendingMoviesWeek[index] = movieData
+//                }
+//                return true
+//            case .trendDay:
+//                // Popular OR Trending week might have trending day movies
+//                if let index = DataManager.shared.trendingMoviesDay.firstIndex(where: { $0.id == movieData.id }) {
+//                    DataManager.shared.trendingMoviesDay[index] = movieData
+//                }
+//                return true
+//            }
+//        }
+//        return false
+        return false
     }
     
     // MARK: Boiler Plate Functions & Enums
@@ -244,6 +403,8 @@ class ApiClient {
         case list = "list"
         case credits = "credits"
         case cert = "release_dates"
+        case trendWeek = "trending/movie/week"
+        case trendDay = "trending/movie/day"
     }
     
     private enum APIError: Error {

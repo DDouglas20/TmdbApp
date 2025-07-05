@@ -16,9 +16,22 @@ class MovieGalleryViewModel: ObservableObject {
     
     @Published var movies: [MovieData] = []
     
-    var viewState: ViewState = .popular
+    @Published var viewState: ViewState = .popular
     
-    var topRatedState: TopRatedState = .week
+    @Published var dataState: DataManager.DataState = .popular
+    
+    var movieArray: [MovieData] {
+        switch dataState {
+        case .popular:
+            return DataManager.shared.popularMovies
+        case .trendWeek:
+            return DataManager.shared.trendingMoviesWeek
+        case .trendDay:
+            return DataManager.shared.trendingMoviesDay
+        }
+    }
+    
+    @Published var trendingState: TrendingState = .week
     
     @Published var movieData: [MovieSubviewData] = []
     
@@ -33,15 +46,23 @@ class MovieGalleryViewModel: ObservableObject {
         var isFavorited: Bool
     }
     
+    var stateTitle: String {
+        return viewState == .popular ? "Popular" : "Trending"
+    }
+    
+    var trendingStateTitle: String {
+        return trendingState == .week ? "Week" : "Day"
+    }
+    
     var galleryTitleString: String {
-        return viewState == .popular ? "Most Popular Movies" : "Top Rated Movies \(topRatedState == .day ? "Today" : "This Week")"
+        return viewState == .popular ? "Most Popular Movies" : "Trending Movies"
     }
   
     // MARK: Functions
     func getMovieSubviewData() {
-        var movieArray = [MovieSubviewData]()
-        for movie in DataManager.shared.popularMovies {
-            movieArray.append(
+        var movieArr = [MovieSubviewData]()
+        for movie in movieArray {
+            movieArr.append(
                 .init(
                     movieId: movie.id,
                     imageUrl: ApiClient.baseImageURL + (movie.portaitPath ?? ""),
@@ -51,37 +72,33 @@ class MovieGalleryViewModel: ObservableObject {
                 )
             )
         }
-        movieData = movieArray
+        movieData = movieArr
     }
     
-//    func addFavorite(id: Int, index: Int) {
-//        var favoritesArr = favList
-//        favoritesArr.append(id)
-//        UserDefaults.standard.set(favoritesArr, forKey: DataManager.favoritesKey)
-//        withAnimation {
-//            movieData[index].isFavorited = true
-//        }
-//    }
-//    
-//    func removeFavorite(id: Int, index: Int) {
-//        var favoritesArr = favList
-//        if let favIndex = favoritesArr.firstIndex(of: id) {
-//            favoritesArr.remove(at: favIndex)
-//            UserDefaults.standard.set(favoritesArr, forKey: DataManager.favoritesKey)
-//            withAnimation(.bouncy(duration: 0.2)) {
-//                movieData[index].isFavorited = false
-//            }
-//            return
-//        }
-//        removeFavAlert = true
-//    }
+    func popularSelected() {
+        viewState = .popular
+        dataState = .popular
+        getMovieSubviewData()
+    }
+    
+    func trendingSelected() {
+        viewState = .trending
+        dataState = trendingState == .week ? .trendWeek : .trendDay
+        getMovieSubviewData()
+    }
+    
+    func trendingTimeChanged(time: TrendingState) {
+        trendingState = time
+        dataState = time == .week ? .trendWeek : .trendDay
+        getMovieSubviewData()
+    }
     
     enum ViewState {
         case popular
-        case topRated
+        case trending
     }
     
-    enum TopRatedState {
+    enum TrendingState {
         case day
         case week
     }
@@ -90,13 +107,13 @@ class MovieGalleryViewModel: ObservableObject {
 
 extension MovieGalleryViewModel: FavoriteManager {
     func manageFavorite(id: Int, index: Int) {
-        var favoritesArr = favList
+        var favoritesArr = Set(favList)
         var isSelected = favoritesArr.contains(id)
         print("isSelected: \(isSelected)")
         if isSelected {
-            if let favIndex = favoritesArr.firstIndex(of: id) {
-                favoritesArr.remove(at: favIndex)
-                UserDefaults.standard.set(favoritesArr, forKey: DataManager.favoritesKey)
+            if favoritesArr.contains(id) { // Check to see if it exists for error reporting
+                favoritesArr.remove(id)
+                UserDefaults.standard.set(Array(favoritesArr), forKey: DataManager.favoritesKey)
                 withAnimation(.bouncy(duration: 0.2)) {
                     movieData[index].isFavorited = false
                 }
@@ -104,8 +121,8 @@ extension MovieGalleryViewModel: FavoriteManager {
             }
             removeFavAlert = true
         } else {
-            favoritesArr.append(id)
-            UserDefaults.standard.set(favoritesArr, forKey: DataManager.favoritesKey)
+            favoritesArr.insert(id)
+            UserDefaults.standard.set(Array(favoritesArr), forKey: DataManager.favoritesKey)
             withAnimation(.bouncy(duration: 0.2)) {
                 movieData[index].isFavorited = true
             }

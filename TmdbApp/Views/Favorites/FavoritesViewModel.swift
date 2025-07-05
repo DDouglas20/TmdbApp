@@ -20,29 +20,32 @@ class FavoritesViewModel: ObservableObject {
     // MARK: Functions
     func getFavoriteMoviesArr() {
         if let idArr = UserDefaults.standard.value(forKey: DataManager.favoritesKey) as? [Int] {
-            var set: Set<MovieData> = [] // We use a set to avoid duplicates if a trending movie is in both Week and Day
+            var arr: [MovieData] = [] // We use a set to avoid duplicates if a trending movie is in both Week and Day
+            var idSet: Set<Int> = []
             // Get the movies from the 2 lists we support
             for movie in DataManager.shared.popularMovies {
                 if let movieId = movie.id, idArr.contains(movieId) {
-                    set.insert(movie)
+                    idSet.insert(movieId)
+                    arr.append(movie)
                 }
             }
             for movie in DataManager.shared.trendingMoviesWeek {
-                if let movieId = movie.id, idArr.contains(movieId) {
-                    set.insert(movie)
+                if let movieId = movie.id, idArr.contains(movieId), !idSet.contains(movieId) {
+                    idSet.insert(movieId)
+                    arr.append(movie)
                 }
             }
             for movie in DataManager.shared.trendingMoviesDay {
-                if let movieId = movie.id, idArr.contains(movieId) {
-                    set.insert(movie)
+                if let movieId = movie.id, idArr.contains(movieId), !idSet.contains(movieId) {
+                    arr.append(movie)
                 }
             }
-            organizeSet(set: set)
+            organizeSet(arr: arr)
         }
     }
     
-    private func organizeSet(set: Set<MovieData>) {
-        var favoritesArray: [MovieData] = Array(set)
+    private func organizeSet(arr: [MovieData]) {
+        var favoritesArray: [MovieData] = arr
         favoritesArray.sort(by: {$0.movieName ?? "" < $1.movieName ?? "" })
         sortedMovies = favoritesArray
     }
@@ -50,12 +53,10 @@ class FavoritesViewModel: ObservableObject {
 
 extension FavoritesViewModel: FavoriteManager {
     func manageFavorite(id: Int, index: Int) {
-        var favoritesArr = favList
-        if let favIndex = favoritesArr.firstIndex(of: id) {
-            favoritesArr.remove(at: favIndex)
-            UserDefaults.standard.set(favoritesArr, forKey: DataManager.favoritesKey)
-            sortedMovies.remove(at: index)
-            return
-        }
+        // No error handling here. The List will never fail to delete on swipe
+        var favoritesArr = Set(favList)
+        favoritesArr.remove(id)
+        UserDefaults.standard.set(Array(favoritesArr), forKey: DataManager.favoritesKey)
+        sortedMovies.remove(at: index)
     }
 }

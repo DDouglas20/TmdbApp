@@ -14,7 +14,7 @@ class HomeViewModel: ObservableObject {
     // MARK: Functions
     func loadMovies(dataState: DataManager.DataState = .popular) async {
         Task {
-            await ApiClient.shared.loadPopularMovies(state: dataState)
+            await ApiClient.shared.loadPopularMovies()
             DispatchQueue.main.async {
                 self.isLoading = false
             }

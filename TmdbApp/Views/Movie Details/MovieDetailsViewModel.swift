@@ -155,13 +155,13 @@ class MovieDetailsViewModel: ObservableObject {
 
 extension MovieDetailsViewModel: FavoriteManager {
     func manageFavorite(id: Int, index: Int) {
-        var favoritesArr = favList
-        var isSelected = favoritesArr.contains(id)
+        var favoritesArr = Set(favList)
+        let isSelected = favoritesArr.contains(id)
         print("isSelected: \(isSelected)")
         if isSelected {
-            if let favIndex = favoritesArr.firstIndex(of: id) {
-                favoritesArr.remove(at: favIndex)
-                UserDefaults.standard.set(favoritesArr, forKey: DataManager.favoritesKey)
+            if favoritesArr.contains(id) { // Check if it exists for error purposes
+                favoritesArr.remove(id)
+                UserDefaults.standard.set(Array(favoritesArr), forKey: DataManager.favoritesKey)
                 withAnimation(.bouncy(duration: 0.2)) {
                     self.isSelected = false
                 }
@@ -169,8 +169,8 @@ extension MovieDetailsViewModel: FavoriteManager {
             }
             removeFavAlert = true
         } else {
-            favoritesArr.append(id)
-            UserDefaults.standard.set(favoritesArr, forKey: DataManager.favoritesKey)
+            favoritesArr.insert(id)
+            UserDefaults.standard.set(Array(favoritesArr), forKey: DataManager.favoritesKey)
             withAnimation(.bouncy(duration: 0.2)) {
                 self.isSelected = true
             }

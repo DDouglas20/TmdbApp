@@ -7,9 +7,9 @@
 
 import Foundation
 
-struct PopularModel: Codable {
+struct MovieModel: Codable {
     var page: Int
-    var results: [PopularResults]
+    var results: [MovieResults]
     var totalPages: Int
     var totalResults: Int
     
@@ -21,7 +21,7 @@ struct PopularModel: Codable {
     }
 }
 
-struct PopularResults: Codable {
+struct MovieResults: Codable {
     var adult: Bool
     var backdrop_path: String
     var genre_ids: [Int]
@@ -54,7 +54,7 @@ struct PopularResults: Codable {
         case vote_count
     }
 
-    init(from decoder: any Decoder) throws {
+    init(from decoder: any Decoder, state: DataManager.DataState) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         
         self.id = try values.decode(Int.self, forKey: .id)
@@ -73,20 +73,20 @@ struct PopularResults: Codable {
         self.vote_count = try values.decode(Int.self, forKey: .vote_count)
         
         // Dynamically append objects to data manager array as they are init
-        DataManager.shared.popularMovies.append(
-            .init(
-                id: self.id,
-                isAdult: self.adult,
-                movieName: self.original_title,
-                movieRating: self.vote_average,
-                reviewCount: self.vote_count,
-                releaseDate: self.release_date,
-                overview: self.overview,
-                genreIds: self.genre_ids,
-                portaitPath: self.poster_path,
-                landscapePath: self.backdrop_path
-            )
-        )
+//        DataManager.shared.popularMovies.append(
+//            .init(
+//                id: self.id,
+//                isAdult: self.adult,
+//                movieName: self.original_title,
+//                movieRating: self.vote_average,
+//                reviewCount: self.vote_count,
+//                releaseDate: self.release_date,
+//                overview: self.overview,
+//                genreIds: self.genre_ids,
+//                portaitPath: self.poster_path,
+//                landscapePath: self.backdrop_path
+//            )
+//        )
     }
 }
 

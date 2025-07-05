@@ -9,6 +9,7 @@ import SwiftUI
 import Kingfisher
 
 struct MovieGalleryView: View {
+    @Environment(\.darkModeColor) private var color
     @StateObject var viewModel: MovieGalleryViewModel = MovieGalleryViewModel()
     let columns = 3
     
@@ -17,22 +18,79 @@ struct MovieGalleryView: View {
     }
     
     var body: some View {
-        ScrollView {
-            LazyVGrid(columns: gridItems) {
-                ForEach(viewModel.movieData.indices, id: \.self) { index in
-                    NavigationLink(value: DataManager.shared.popularMovies[index]) {
-                        MoviePosterView(
-                            data: viewModel.movieData[index],
-                            favoriteAction: { id in
-                                viewModel.manageFavorite(id: id, index: index)
-                            }
-                        )
+        VStack(spacing: 16) {
+            HStack {
+                Menu {
+                    Button {
+                        viewModel.popularSelected()
+                    } label: {
+                        Text("Popular")
+                    }
+                    Button {
+                        viewModel.trendingSelected()
+                    } label: {
+                        Text("Trending")
+                    }
+
+                } label: {
+                    HStack {
+                        Text(viewModel.stateTitle)
+                            .foregroundStyle(color)
+                            .font(.system(size: 17))
+                            .fontWeight(.semibold)
+                        Image(systemName: "chevron.down")
+                            .resizable()
+                            .renderingMode(.template)
+                            .frame(width: 12, height: 8)
+                            .foregroundStyle(color)
                     }
                 }
+                
+                Spacer()
+                if viewModel.viewState == .trending {
+                    Menu {
+                        Button(action: {
+                            viewModel.trendingTimeChanged(time: .week)
+                        }, label: {
+                            Text("Week")
+                        })
+                        Button(action: {
+                            viewModel.trendingTimeChanged(time: .day)
+                        }, label: {
+                            Text("Day")
+                        })
+                    } label: {
+                        HStack {
+                            Text(viewModel.trendingStateTitle)
+                            Image(systemName: "chevron.down")
+                                .resizable()
+                                .renderingMode(.template)
+                                .frame(width: 12, height: 8)
+                                .foregroundStyle(color)
+                        }
+                    }
+                    .foregroundColor(color)
+                    .cornerRadius(8)
+                    .shadow(radius: 3)
+                }
             }
-            .padding()
-            .frame(maxWidth: .infinity)
+            ScrollView {
+                LazyVGrid(columns: gridItems) {
+                    ForEach(viewModel.movieData.indices, id: \.self) { index in
+                        NavigationLink(value: viewModel.movieArray[index]) {
+                            MoviePosterView(
+                                data: viewModel.movieData[index],
+                                favoriteAction: { id in
+                                    viewModel.manageFavorite(id: id, index: index)
+                                }
+                            )
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity)
+            }
         }
+        .padding()
         .navigationTitle(viewModel.galleryTitleString)
         .navigationBarTitleDisplayMode(.automatic)
         .navigationDestination(for: MovieData.self) { movie in
