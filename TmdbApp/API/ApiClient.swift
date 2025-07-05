@@ -18,7 +18,7 @@ class ApiClient {
     // MARK: Properties
     private struct Constants {
         static let baseURL = "https://api.themoviedb.org/3/"
-        static let apiKey = "ffc59b7cf2895c4d60f4d00a7d1bbd53" // TODO: Remove api key before push
+        static let apiKey = Bundle.main.infoDictionary?["API_KEY"] as? String
     }
     
     // MARK: Functions
@@ -29,7 +29,7 @@ class ApiClient {
                 getPopularMovies { success in
                     if success {
                         continuation.resume(returning: DataManager.shared.popularMovies)
-                        for movie in DataManager.shared.popularMovies {
+                        for movie in DataManager.shared.popularMovies { // Tried caching ran into threading issue that was not quickly solvable
                             if let id = movie.id {
                                 DataManager.shared.popDict[id] = true
                             }
@@ -44,7 +44,7 @@ class ApiClient {
                 getTrendingMoviesWeek { success in
                     if success {
                         continuation.resume(returning: DataManager.shared.trendingMoviesWeek)
-                        for movie in DataManager.shared.trendingMoviesWeek {
+                        for movie in DataManager.shared.trendingMoviesWeek { // Tried caching ran into threading issue that was not quickly solvable
                             if let id = movie.id {
                                 DataManager.shared.trendWeekDict[id] = true
                             }
@@ -59,7 +59,7 @@ class ApiClient {
                 getTrendingMoviesDay { success in
                     if success {
                         continuation.resume(returning: DataManager.shared.trendingMoviesDay)
-                        for movie in DataManager.shared.trendingMoviesDay {
+                        for movie in DataManager.shared.trendingMoviesDay { // Tried caching ran into threading issue that was not quickly solvable
                             if let id = movie.id {
                                 DataManager.shared.trendDayDict[id] = true
                             }
@@ -119,7 +119,6 @@ class ApiClient {
             }
 
             print("Finished getting all movies")
-            print("Week count: \(DataManager.shared.trendingMoviesWeek.count)\nDay count: \(DataManager.shared.trendingMoviesDay.count)")
 
         } catch {
             print("Error during initial movie load: \(error)")
@@ -130,9 +129,6 @@ class ApiClient {
     /// Gets the details for an individual movie
     /// - Parameter movieId: The movie's id
     private func getMovieDetails(movieId: Int, dataState: DataManager.DataState) async throws {
-        if dataInCache(movieId: movieId, dataState: dataState) {
-            return
-        }
         guard let url = formURL(baseUrl: Constants.baseURL + "movie/\(movieId)", endpoint: nil) else {
             throw APIError.invalidURL
         }
@@ -153,9 +149,6 @@ class ApiClient {
     }
     
     private func getMovieCertification(movieId: Int, dataState: DataManager.DataState) async throws {
-        if dataInCache(movieId: movieId, dataState: dataState) {
-            return
-        }
         guard let url = formURL(baseUrl: Constants.baseURL + "movie/\(movieId)/", endpoint: .cert) else {
             throw APIError.invalidURL
         }
@@ -179,9 +172,6 @@ class ApiClient {
     /// Gets the youtubeId for watching the trailer
     /// - Parameter movieId: The movie's id
     private func getVideoData(movieId: Int, dataState: DataManager.DataState) async throws {
-        if dataInCache(movieId: movieId, dataState: dataState) {
-            return
-        }
         guard let url = formURL(baseUrl: Constants.baseURL + "movie/\(movieId)/", endpoint: .videos) else {
             throw APIError.invalidURL
         }
@@ -228,9 +218,6 @@ class ApiClient {
     /// Get movie credits so we can find the director
     /// - Parameter movieId: The movie's id
     private func getCredits(movieId: Int, dataState: DataManager.DataState) async throws {
-        if dataInCache(movieId: movieId, dataState: dataState) {
-            return
-        }
         guard let url = formURL(baseUrl: Constants.baseURL + "movie/\(movieId)/", endpoint: .credits) else {
             throw APIError.invalidURL
         }
@@ -319,30 +306,6 @@ class ApiClient {
                 return
             }
         }
-    }
-    
-    private func dataInCache(movieId: Int, dataState: DataManager.DataState) -> Bool {
-//        if let movieData = DataManager.shared.checkDictForValue(for: movieId) {
-//            switch dataState {
-//            case .popular:
-//                // Popular case we dont need to do anything
-//                return false
-//            case .trendWeek:
-//                // Popular might have trending week movies
-//                if let index = DataManager.shared.trendingMoviesWeek.firstIndex(where: { $0.id == movieData.id }) {
-//                    DataManager.shared.trendingMoviesWeek[index] = movieData
-//                }
-//                return true
-//            case .trendDay:
-//                // Popular OR Trending week might have trending day movies
-//                if let index = DataManager.shared.trendingMoviesDay.firstIndex(where: { $0.id == movieData.id }) {
-//                    DataManager.shared.trendingMoviesDay[index] = movieData
-//                }
-//                return true
-//            }
-//        }
-//        return false
-        return false
     }
     
     // MARK: Boiler Plate Functions & Enums

@@ -108,8 +108,7 @@ class MovieGalleryViewModel: ObservableObject {
 extension MovieGalleryViewModel: FavoriteManager {
     func manageFavorite(id: Int, index: Int) {
         var favoritesArr = Set(favList)
-        var isSelected = favoritesArr.contains(id)
-        print("isSelected: \(isSelected)")
+        let isSelected = favoritesArr.contains(id)
         if isSelected {
             if favoritesArr.contains(id) { // Check to see if it exists for error reporting
                 favoritesArr.remove(id)

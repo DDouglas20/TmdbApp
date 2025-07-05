@@ -180,7 +180,7 @@ private struct MoviePosterView: View {
                     .scaledToFit()
                     .frame(width: 25, height: 25)
                     //.offset(x: 5, y: 5)
-                    .foregroundStyle(data.isFavorited ? .pink : color)
+                    .foregroundStyle(.pink)
             })
         }
         .alert("Error", isPresented: $showFailedAlert, actions: {}, message: {
@@ -198,7 +198,3 @@ private struct MoviePosterView: View {
         }
     }
 }
-
-//#Preview {
-//    MovieGalleryView()
-//}

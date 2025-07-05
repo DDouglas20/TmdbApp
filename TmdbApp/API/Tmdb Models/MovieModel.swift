@@ -53,41 +53,6 @@ struct MovieResults: Codable {
         case vote_average
         case vote_count
     }
-
-    init(from decoder: any Decoder, state: DataManager.DataState) throws {
-        let values = try decoder.container(keyedBy: CodingKeys.self)
-        
-        self.id = try values.decode(Int.self, forKey: .id)
-        self.adult = try values.decode(Bool.self, forKey: .adult)
-        self.backdrop_path = try values.decode(String.self, forKey: .backdrop_path)
-        self.genre_ids = try values.decode([Int].self, forKey: .genre_ids)
-        self.original_language = try values.decode(String.self, forKey: .original_language)
-        self.original_title = try values.decode(String.self, forKey: .original_title)
-        self.overview = try values.decode(String.self, forKey: .overview)
-        self.popularity = try values.decode(Double.self, forKey: .popularity)
-        self.poster_path = try values.decode(String.self, forKey: .poster_path)
-        self.release_date = try values.decode(String.self, forKey: .release_date)
-        self.title = try values.decode(String.self, forKey: .title)
-        self.video = try values.decode(Bool.self, forKey: .video)
-        self.vote_average = try values.decode(Double.self, forKey: .vote_average)
-        self.vote_count = try values.decode(Int.self, forKey: .vote_count)
-        
-        // Dynamically append objects to data manager array as they are init
-//        DataManager.shared.popularMovies.append(
-//            .init(
-//                id: self.id,
-//                isAdult: self.adult,
-//                movieName: self.original_title,
-//                movieRating: self.vote_average,
-//                reviewCount: self.vote_count,
-//                releaseDate: self.release_date,
-//                overview: self.overview,
-//                genreIds: self.genre_ids,
-//                portaitPath: self.poster_path,
-//                landscapePath: self.backdrop_path
-//            )
-//        )
-    }
 }
 
 

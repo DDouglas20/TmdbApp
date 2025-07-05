@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B73E730D2E18C85B00EC2AF1 /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = B73E730C2E18C85B00EC2AF1 /* Secrets.xcconfig */; };
 		B7656F792E1816A700D93242 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = B7656F782E1816A700D93242 /* Kingfisher */; };
 /* End PBXBuildFile section */
 
@@ -28,6 +29,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B73E730C2E18C85B00EC2AF1 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
+		B73E73102E18CB0100EC2AF1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B7656F222E174F7A00D93242 /* TmdbApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TmdbApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B7656F322E174F7B00D93242 /* TmdbAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TmdbAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B7656F3C2E174F7B00D93242 /* TmdbAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TmdbAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -80,11 +83,13 @@
 		B7656F192E174F7A00D93242 = {
 			isa = PBXGroup;
 			children = (
+				B73E73102E18CB0100EC2AF1 /* Info.plist */,
 				B7656F242E174F7A00D93242 /* TmdbApp */,
 				B7656F352E174F7B00D93242 /* TmdbAppTests */,
 				B7656F3F2E174F7B00D93242 /* TmdbAppUITests */,
 				B7656F772E1816A700D93242 /* Frameworks */,
 				B7656F232E174F7A00D93242 /* Products */,
+				B73E730C2E18C85B00EC2AF1 /* Secrets.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -229,6 +234,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B73E730D2E18C85B00EC2AF1 /* Secrets.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -288,8 +294,10 @@
 /* Begin XCBuildConfiguration section */
 		B7656F442E174F7B00D93242 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = B73E730C2E18C85B00EC2AF1 /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				API_KEY = "$(API_KEY)";
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -343,6 +351,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_SWIFT_FLAGS = "-DDEBUG";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -353,6 +362,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				API_KEY = "$(API_KEY)";
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -399,6 +409,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "-DDEBUG";
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
@@ -416,6 +427,7 @@
 				DEVELOPMENT_TEAM = B8H5489DU2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "${SRCROOT}/Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -445,6 +457,7 @@
 				DEVELOPMENT_TEAM = B8H5489DU2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "${SRCROOT}/Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

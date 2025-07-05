@@ -19,11 +19,4 @@ struct VideoObjects: Codable {
     let key: String?
     let site: String?
     let type: String?
-    
-    init(from decoder: any Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.key = try container.decode(String.self, forKey: .key)
-        self.site = try container.decode(String.self, forKey: .site)
-        self.type = try container.decode(String.self, forKey: .type)
-    }
 }
