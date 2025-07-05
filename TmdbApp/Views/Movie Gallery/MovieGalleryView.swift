@@ -88,6 +88,14 @@ struct MovieGalleryView: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
+                .overlay {
+                    if viewModel.movieData.count < 1 {
+                        Text("No Movies Found")
+                            .font(.largeTitle)
+                            .foregroundStyle(color)
+                            .fontWeight(.bold)
+                    }
+                }
             }
         }
         .padding()
