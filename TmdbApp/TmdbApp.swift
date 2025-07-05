@@ -11,7 +11,7 @@ import SwiftUI
 struct TmdbApp: App {
     var body: some Scene {
         WindowGroup {
-            MovieGalleryView()
+            HomeView()
         }
     }
 }

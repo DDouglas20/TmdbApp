@@ -10,23 +10,18 @@ import Foundation
 
 class ApiClient {
     
+    // MARK: Static Properties
     static let shared = ApiClient()
     
+    static let baseImageURL = "https://image.tmdb.org/t/p/w500"
+    
+    // MARK: Properties
     private struct Constants {
         static let baseURL = "https://api.themoviedb.org/3/"
         static let apiKey = "ffc59b7cf2895c4d60f4d00a7d1bbd53" // TODO: Remove api key before push
     }
     
-    // TODO: Func retrieve image
-    
-    // Four api calls
-    // 1. Video call
-    // 2. Genre call
-    // 3. Movie details call
-    // 4. Credits call
-    // Concurrency needed
-    
-    // TODO: Image call, Logo call (do it in one) - SCRAPPED KingFisher
+    // MARK: Functions
     
     func loadPopularMovies(state: DataManager.DataState) async {
         do {
@@ -146,7 +141,9 @@ class ApiClient {
         }
     }
     
-    // TODO: Credits call
+    
+    /// Get movie credits so we can find the director
+    /// - Parameter movieId: The movie's id
     private func getCredits(movieId: Int) async throws {
         guard let url = formURL(baseUrl: Constants.baseURL + "movie/\(movieId)/", endpoint: .credits) else {
             throw APIError.invalidURL
@@ -179,7 +176,7 @@ class ApiClient {
         
         request(url: url, expecting: PopularModel.self) { result in
             switch result {
-            case .success(let model):
+            case .success(_):
                 completion(true)
             case .failure(let error):
                 print(error)

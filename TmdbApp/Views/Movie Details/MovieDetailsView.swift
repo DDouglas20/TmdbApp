@@ -11,7 +11,6 @@ import Kingfisher
 struct MovieDetailsView: View {
     @Environment(\.darkModeColor) private var color
     @StateObject var viewModel: MovieDetailsViewModel
-    @State var showDirectorPage: Bool = false
     
     var body: some View {
         ScrollView { // Account for device orientation / smaller screens
@@ -96,7 +95,7 @@ struct MovieDetailsView: View {
                                 }
                             }
                         }
-                        .scrollDisabled(viewModel.productionData.count < 4)
+                        .scrollDisabled(viewModel.productionData.count < 3)
                     }
                 }
                 Spacer() // Align everything to the top
@@ -104,6 +103,26 @@ struct MovieDetailsView: View {
             .padding()
             .navigationTitle(viewModel.movieTitle)
             .navigationBarTitleDisplayMode(.automatic)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: {
+                        guard viewModel.movieId != -1 else {
+                            viewModel.addFavAlert = true
+                            return
+                        }
+                        viewModel.manageFavorite(id: viewModel.movieId, index: -1)
+                        // Haptic feedback since it's so small
+                        viewModel.impactGenerator.impactOccurred()
+                    }, label: {
+                        Image(systemName: viewModel.isSelected ? "heart.fill" : "heart")
+                            .resizable()
+                            .renderingMode(.template)
+                            .scaledToFit()
+                            .frame(width: 25, height: 25)
+                            .foregroundStyle(viewModel.isSelected ? .pink : color)
+                    })
+                }
+            }
         }
         .fullScreenCover(isPresented: $viewModel.showDirPage) {
             if let url = viewModel.directorUrl {
@@ -113,6 +132,12 @@ struct MovieDetailsView: View {
         }
         .alert("Error", isPresented: $viewModel.showAlert, actions: {}, message: {
             Text("Could not open web page. Please try again later.")
+        })
+        .alert("Error", isPresented: $viewModel.addFavAlert, actions: {}, message: {
+            Text("Could not add favorite. Please try again later.")
+        })
+        .alert("Error", isPresented: $viewModel.removeFavAlert, actions: {}, message: {
+            Text("Could not remove favorite. Please try again later.")
         })
     }
     

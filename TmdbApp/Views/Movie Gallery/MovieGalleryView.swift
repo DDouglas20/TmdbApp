@@ -8,56 +8,8 @@
 import SwiftUI
 import Kingfisher
 
-struct DarkModeColorKey: EnvironmentKey {
-    static let defaultValue: Color = .black
-}
-
-extension EnvironmentValues {
-    var darkModeColor: Color {
-        get { self[DarkModeColorKey.self] }
-        set { self[DarkModeColorKey.self] = newValue }
-    }
-}
-
 struct MovieGalleryView: View {
-    @Environment(\.colorScheme) var colorScheme
-    @StateObject var viewModel = MovieGalleryViewModel()
-    @State var isLoading: Bool = false
-    
-    var darkModeColor: Color {
-        return colorScheme == .light ? .black : .white
-    }
-    var body: some View {
-        if viewModel.isLoading {
-            // TODO: Shimmer view maybe?
-            ProgressView()
-                .tint(darkModeColor)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .onAppear {
-                    Task {
-                        await viewModel.loadMovies()
-                    }
-                }
-        } else {
-            TabView {
-                Tab("Home", systemImage: "house", content: {
-                    NavigationStack {
-                        MovieGallerySubview(data: viewModel.returnMovieSubviewData(), titleString: viewModel.galleryTitleString)
-                            
-                    }
-                })
-                Tab("Favorites", systemImage: "heart.fill", content: {
-                    FavoritesView()
-                })
-            }
-            .environment(\.darkModeColor, colorScheme == .light ? .black : .white) // Light and Dark mode support
-        }
-    }
-}
-
-private struct MovieGallerySubview: View {
-    let data: [MovieGalleryViewModel.MovieSubviewData]
-    let titleString: String
+    @StateObject var viewModel: MovieGalleryViewModel = MovieGalleryViewModel()
     let columns = 3
     
     private var gridItems: [GridItem] {
@@ -67,16 +19,21 @@ private struct MovieGallerySubview: View {
     var body: some View {
         ScrollView {
             LazyVGrid(columns: gridItems) {
-                ForEach(data.indices, id: \.self) { index in
+                ForEach(viewModel.movieData.indices, id: \.self) { index in
                     NavigationLink(value: DataManager.shared.popularMovies[index]) {
-                        MoviePosterView(data: data[index])
+                        MoviePosterView(
+                            data: viewModel.movieData[index],
+                            favoriteAction: { id in
+                                viewModel.manageFavorite(id: id, index: index)
+                            }
+                        )
                     }
                 }
             }
             .padding()
             .frame(maxWidth: .infinity)
         }
-        .navigationTitle(titleString)
+        .navigationTitle(viewModel.galleryTitleString)
         .navigationBarTitleDisplayMode(.automatic)
         .navigationDestination(for: MovieData.self) { movie in
             MovieDetailsView(
@@ -84,16 +41,33 @@ private struct MovieGallerySubview: View {
                     MovieDetailsViewModel(movieObject: movie)
             )
         }
+        .alert("Error", isPresented: $viewModel.removeFavAlert, actions: {}, message: {
+            Text("Could not remove from favorites. Please try again later.")
+        })
+        .onAppear {
+            viewModel.getMovieSubviewData()
+        }
     }
     
     private func numberOfRows() -> Int {
-        return (data.count + columns - 1) / columns
+        return (viewModel.movieData.count + columns - 1) / columns
     }
 }
 
 private struct MoviePosterView: View {
     @Environment(\.darkModeColor) private var color
+    @State private var showFailedAlert: Bool = false
+    let impactGenerator = UIImpactFeedbackGenerator(style: .medium, view: UIApplication.shared.connectedScenes
+        .compactMap({ ($0 as? UIWindowScene)?.keyWindow }).first ?? UIView())
     let data: MovieGalleryViewModel.MovieSubviewData
+    let favoriteAction: (Int) -> Void
+    
+    init(data: MovieGalleryViewModel.MovieSubviewData, favoriteAction: @escaping (Int) -> Void) {
+        self.data = data
+        self.favoriteAction = favoriteAction
+        impactGenerator.prepare()
+    }
+    
     var body: some View {
         VStack(alignment: .leading) {
             if let urlString = data.imageUrl, let url = URL(string: urlString) {
@@ -132,6 +106,28 @@ private struct MoviePosterView: View {
             Spacer()
         }
         .frame(width: 100, height: 225)
+        .overlay(alignment: .topTrailing) {
+            Button(action: {
+                guard let movieId = data.movieId else {
+                    showFailedAlert = true
+                    return
+                }
+                favoriteAction(movieId)
+                // Haptic feedback since it's so small
+                impactGenerator.impactOccurred()
+            }, label: {
+                Image(systemName: data.isFavorited ? "heart.fill" : "heart")
+                    .resizable()
+                    .renderingMode(.template)
+                    .scaledToFit()
+                    .frame(width: 25, height: 25)
+                    //.offset(x: 5, y: 5)
+                    .foregroundStyle(data.isFavorited ? .pink : color)
+            })
+        }
+        .alert("Error", isPresented: $showFailedAlert, actions: {}, message: {
+            Text("Could not favorite movie. Please try again later.")
+        })
     }
     
     private func getRatingImageName(for rating: Double) -> String {

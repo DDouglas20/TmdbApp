@@ -8,7 +8,13 @@
 import Foundation
 
 class DataManager {
+    
+    // MARK: Static Properties
     static let shared = DataManager()
+    
+    static let favoritesKey = "favorites"
+    
+    // MARK: Properties
     
     let digitalType = 4 // Digital only releases like Amazon Prime / Netflix
     
@@ -17,6 +23,10 @@ class DataManager {
     let usCode = "US"
     
     var popularMovies = [MovieData]()
+    
+    var trendingMoviesDay = [MovieData]()
+    
+    var trendingMoviesWeek = [MovieData]()
     
     var genreMap = [Int: String]()
     
